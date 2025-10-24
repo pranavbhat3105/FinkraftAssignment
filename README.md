@@ -5,7 +5,7 @@ Here is a small `README.md` file structured to cover all the required deliverabl
 ````markdown
 # DevOps Project: Flask Application with CI/CD, HPA, and Monitoring
 
-This repository contains a complete DevOps pipeline for the provided assignment, demonstrating core practices including containerization, automated CI/CD, Kubernetes deployment with Horizontal Pod Autoscaling (HPA), and a full Prometheus/Grafana monitoring stack.
+This repository contains a complete DevOps pipeline for the provided assignment, demonstrating core practices including containerization, automated CI/CD, Kubernetes deployment with Horizontal Pod Autoscaling (HPA), and a full Prometheus/Grafana monitoring.
 
 ## 🚀 Project Overview
 
@@ -51,9 +51,9 @@ The CI/CD is managed by the workflow file: `.github/workflows/ci-cd.yml`.
 | Stage  | Action             | Details |
 | :---   | :---              | :---     |
 | **CI** | Test, Build, Push | **GitHub Actions** runs Python linting/tests, builds the Docker image , and pushes it to DockerHub using configured  secrets. |
-| **CD** | Deploy            | After a successful build, **Helm** is used to perform a rolling update (`helm upgrade --install`) on the Kubernetes cluster, deploying the new image tag. |
+| **CD** | Deploy            | After a successful build, **Helm** is used to perform a rolling update (`helm upgrade --install`) on the Kubernetes cluster (EKS), deploying the new image tag. |
 
- Set the following secrets in your GitHub repository settings: `DOCKER_USERNAME`, `DOCKER_PASSWORD`, and `KUBE_CONFIG_DATA`.
+ Set the following secrets in your GitHub repository settings: `DOCKER_USERNAME`, `DOCKER_PASSWORD`, `AWS_IAM_ARN` and `KUBE_CONFIG_DATA`.
 
 ### 4\. Auto Scaling Demonstration (HPA Test)
 
