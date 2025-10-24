@@ -16,6 +16,7 @@ jobs:
 
   ci:
     runs-on: ubuntu-latest
+    environment: Finkraft
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
