@@ -42,6 +42,7 @@ minikube start --driver=docker
 # Optional: Verify Metrics Server is running
 kubectl get apiservices | grep metrics
 ````
+<img width="1275" height="67" alt="Screenshot 2025-10-24 162057" src="https://github.com/user-attachments/assets/5bf13d25-d687-4c0c-9535-c08519cc1e33" />
 
 ### 3\. CI/CD Pipeline Workflow
 
@@ -68,15 +69,21 @@ The HPA is configured in `flask-chart/templates/hpa.yaml` to scale the applicati
 
     *Initial state should show 2/10 Replicas.*
 
-2.  **Apply Load:** Execute the `kubectl stress` command to target the CPU-intensive `/stress` endpoint.
+    <img width="1516" height="169" alt="Screenshot 2025-10-24 161239" src="https://github.com/user-attachments/assets/906fb920-20d4-441c-b977-0aa25ca8febf" />
+
+
+3.  **Apply Load:** Execute the `kubectl stress` command to target the CPU-intensive `/stress` endpoint.
 
     ```bash
-    kubectl run -it --rm load-tester --image=quay.io/travisghansen/kubectl-stress -- /bin/sh -c "ab -n 50000 -c 100 -s 60 -T 'application/json' http://devops-release-flask-chart/stress"
+    kubectl run -it --rm load-tester --image=quay.io/travisghansen/kubectl-stress -- /bin/sh -c "ab -n 50000 -c 100 -s 60 -T 'application/json' http://10.97.232.38:3000/stress"
     ```
 
-3.  **Observation:** The HPA will respond by increasing the pod count (up to 10) to bring the CPU utilization back under 50%. **Capture a screenshot/video of the scaling in action.**
+4.  **Observation:** The HPA will respond by increasing the pod count (up to 10) to bring the CPU utilization back under 50%. ****
 
-4.  **Stop Load:** To stop the stress test and observe the scale-down (a gradual process), simply delete the temporary pod:
+   <img width="1457" height="588" alt="Screenshot 2025-10-24 161407" src="https://github.com/user-attachments/assets/28ffac94-2fe5-41b7-849a-cbb99b133c58" />
+
+
+6.  **Stop Load:** To stop the stress test and observe the scale-down (a gradual process), simply delete the temporary pod:
 
     ```bash
     kubectl delete pod load-tester
@@ -96,26 +103,39 @@ We use the `kube-prometheus-stack` Helm chart to quickly deploy our observabilit
     helm repo add prometheus-community [https://prometheus-community.github.io/helm-charts](https://prometheus-community.github.io/helm-charts)
     helm install prometheus-stack prometheus-community/kube-prometheus-stack --namespace monitoring --create-namespace
     ```
+    <img width="1904" height="874" alt="Screenshot 2025-10-24 161101" src="https://github.com/user-attachments/assets/a76bcc61-8483-448d-90a7-e742f4928c63" />
+
 
 2.  **Access Grafana:** Forward the port to access the Grafana GUI locally:
 
-    ```bash
-    # Get the Grafana service name (e.g., prometheus-stack-grafana)
-    kubectl get svc -n monitoring 
-    # Forward the port
-    kubectl port-forward svc/<GRAFANA_SVC_NAME> 3000:80 -n monitoring
-    ```
+<img width="1900" height="863" alt="Screenshot 2025-10-24 160835" src="https://github.com/user-attachments/assets/1895bc1e-a909-4342-9c65-94b6e2835b69" />
+
+
+<img width="1517" height="740" alt="Screenshot 2025-10-24 161029" src="https://github.com/user-attachments/assets/82af1e5f-1694-408c-9675-ebaa12866464" />
+
+<img width="1876" height="868" alt="Screenshot 2025-10-24 160811" src="https://github.com/user-attachments/assets/58319635-3524-450f-bc9a-93c8059b5f22" />
+
+
 
     Access at **`http://localhost:3000`**. Use the default `admin` username and retrieve the password from the Kubernetes secret.
 
 ### Alerting Details
 
-  * **Tool:** Alertmanager (included in the stack).
-  * **Alert Rule:** Defined via a `PrometheusRule` CRD (must be created separately, targeting your application deployment).
-  * **Example Threshold:** An alert is configured to fire if the application's CPU utilization exceeds **80%** for a sustained period.
-  * **Notification:** Alertmanager must be configured (via its Helm values) to integrate with a service like **Email (SMTP)** or **Slack** to send notifications when the threshold is breached. **A screenshot of a received alert notification is required.**
+  * **Tool:** Alertmanager 
+  * **Alert Rule:**
+  * All configs added in the repo
+
+  * **Notification:** Alertmanager must be configured (via its Helm values) to integrate with a service like **Email (SMTP)
+
+  *<img width="1637" height="729" alt="Screenshot 2025-10-24 160903" src="https://github.com/user-attachments/assets/4e7e3de7-5a8f-4797-9822-d4ca12a60150" />
+
+  * <img width="1635" height="711" alt="Screenshot 2025-10-24 160926" src="https://github.com/user-attachments/assets/ad9d8229-4e8b-4d3c-b71c-624ae48cbfeb" />
+
+
+  * **Example Threshold:** An alert is configured to fire if the application's CPU utilization exceeds **50%** for a sustained period.
+    <img width="1257" height="368" alt="Screenshot 2025-10-24 162204" src="https://github.com/user-attachments/assets/0d1a2cc4-2bf8-4a3c-acb9-6abb81258584" />
+
+ 
 
 <!-- end list -->
 
-```
-```
