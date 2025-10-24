@@ -5,7 +5,7 @@ Here is a small `README.md` file structured to cover all the required deliverabl
 ````markdown
 # DevOps Project: Flask Application with CI/CD, HPA, and Monitoring
 
-This repository contains a complete DevOps pipeline for a simple Python Flask application, demonstrating core practices including containerization, automated CI/CD, Kubernetes deployment with Horizontal Pod Autoscaling (HPA), and a full Prometheus/Grafana monitoring stack.
+This repository contains a complete DevOps pipeline for the provided assignment, demonstrating core practices including containerization, automated CI/CD, Kubernetes deployment with Horizontal Pod Autoscaling (HPA), and a full Prometheus/Grafana monitoring stack.
 
 ## 🚀 Project Overview
 
