@@ -1,4 +1,4 @@
-name: CI/CD Pipeline 
+name: CI/CD Pipeline - Finkraft Assignment 
 
 on:
   push:
@@ -6,17 +6,20 @@ on:
       - master
 
 env:
-  # Define variables used throughout the workflow
+  # Global variables
   IMAGE_NAME: devops-release-flask-chart
   IMAGE_TAG: ${{ github.sha }}
   REGISTRY_BASE: docker.io/
-  HELM_CHART_PATH: ./flask-chart # Adjust this path if your chart is elsewhere
+  HELM_CHART_PATH: ./flask-chart 
 
 jobs:
 
+  # --------------------------------------------------------------------------
+  # CI Stage: Build, Test, and Push Image
+  # --------------------------------------------------------------------------
   ci:
     runs-on: ubuntu-latest
-    environment: Finkraft
+    environment: Finkraft  
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -36,19 +39,18 @@ jobs:
           echo "Running Linting..."
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           echo "Running Pytest..."
-          # Replace 'pytest' with your actual test command if different
-          pytest
+          pytest 
 
-      - name: Login to Docker Hub
+      - name: 🔒 Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }} 
 
-      - name: Set up Docker Buildx
+      - name: 🛠️ Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       
-      - name: Build Docker Image
+      - name: Build and Push Docker Image
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -57,39 +59,38 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-    outputs:
-      # Pass the full image tag to the CD stage
-      image_tag: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-
+  # --------------------------------------------------------------------------
+  # CD Stage: Deploy to Minikube running on the runner VM
+  # --------------------------------------------------------------------------
   cd:
-    needs: ci # Ensures CI must complete successfully before deployment starts
+    needs: ci 
     runs-on: ubuntu-latest
     environment: Finkraft
+    permissions:
+      id-token: write # Required for OIDC
+      contents: read
+      
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: ⚙️ Set up Kubeconfig for Minikube Cluster
-        uses: azure/k8s-set-context@v4
+      - name: Configure AWS Credentials 
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          # Uses the Kubeconfig Secret to authenticate with the cluster
-          kubeconfig: ${{ secrets.KUBE_CONFIG_DATA }}
-
-      - name: ⚙️ Decode and Set Kubeconfig
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE_ARN }} 
+          aws-region: us-east-1
+    
+      - name: Connect to EKS Cluster and Configure Kubeconfig
         run: |
-          # 1. Decode the Base64 secret into a temporary file
-          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 -d > /tmp/kubeconfig
-          
-          # 2. Set the KUBECONFIG environment variable for all subsequent steps
-          echo "KUBECONFIG=/tmp/kubeconfig" >> $GITHUB_ENV
-        shell: bash
- 
-
+          # The AWS CLI automatically configures kubectl to use the assumed IAM role
+          aws eks update-kubeconfig --name your-eks-finkraft --region us-east-1 
+        
+      # --- 3. HELM DEPLOYMENT ---
       - name: Install and Configure Helm
         uses: azure/setup-helm@v4
 
       - name: Deploy Application with Helm
-        # This step now automatically finds the KUBECONFIG file defined above
+        # Helm uses the Kubeconfig automatically set by the 'aws eks update-kubeconfig' command
         run: |
           helm upgrade --install devops-release-flask-chart ${{ env.HELM_CHART_PATH }} \
             --namespace default \
@@ -97,3 +98,16 @@ jobs:
             --set image.tag=${{ env.IMAGE_TAG }} \
             --atomic \
             --timeout 5m
+
+      - name: Verify Deployed Image
+        run: |
+          echo "Waiting for deployment rollout..."
+          # Wait for the deployment to fully roll out
+          kubectl rollout status deployment/devops-release-flask-chart --timeout=60s
+          
+          # Get the image name of the running container
+          DEPLOYED_IMAGE=$(kubectl get deployment devops-release-flask-chart \
+            -o=jsonpath="{.spec.template.spec.containers[0].image}")
+            
+          echo "--- Deployment Verification Successful ---"
+          echo "Deployed Image: $DEPLOYED_IMAGE"
