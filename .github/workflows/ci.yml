@@ -75,15 +75,22 @@ jobs:
           # Uses the Kubeconfig Secret to authenticate with the cluster
           kubeconfig: ${{ secrets.KUBE_CONFIG_DATA }}
 
-      - name: 📦 Install and Configure Helm
+      - name: ⚙️ Decode and Set Kubeconfig
+        run: |
+          # 1. Decode the Base64 secret into a temporary file
+          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 -d > /tmp/kubeconfig
+          
+          # 2. Set the KUBECONFIG environment variable for all subsequent steps
+          echo "KUBECONFIG=/tmp/kubeconfig" >> $GITHUB_ENV
+        shell: bash
+ 
+
+      - name: Install and Configure Helm
         uses: azure/setup-helm@v4
 
-      - name: 🚀 Deploy Application with Helm
+      - name: Deploy Application with Helm
+        # This step now automatically finds the KUBECONFIG file defined above
         run: |
-          # 1. Update the Helm chart values with the newly built image tag
-
-          
-          # 2. Use 'helm upgrade --install' for idempotent deployment
           helm upgrade --install devops-release-flask-chart ${{ env.HELM_CHART_PATH }} \
             --namespace default \
             --set image.repository=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }} \
