@@ -1,0 +1,28 @@
+# hpa-alert-rule.yaml
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: flask-app-hpa-alert
+  namespace: default # CHANGE this if your app is in a different namespace
+  labels:
+    release: prometheus-stack # Match the label of your Prometheus installation
+spec:
+  groups:
+  - name: flask.app.alerts
+    rules:
+    - alert: HighCPUTriggersHPA
+      # Expression: Average CPU usage across all pods is greater than 50%
+      expr: |
+        avg(
+          rate(container_cpu_usage_seconds_total{
+            namespace="default",
+            container="flask-chart" # CHANGE this to your container name if needed
+          }[5m])
+        ) by (deployment) * 100 > 50
+      for: 1m # Wait 1 minute to confirm the high usage before alerting
+      labels:
+        severity: warning
+      annotations:
+        summary: "CPU Utilization reached 50% (HPA Trigger)"
+        description: "The average CPU utilization for deployment {{ $labels.deployment }} has exceeded 50%, indicating high load. HPA should be actively scaling up replicas."
