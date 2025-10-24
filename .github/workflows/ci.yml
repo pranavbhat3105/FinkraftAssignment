@@ -60,6 +60,7 @@ jobs:
   cd:
     needs: ci # Ensures CI must complete successfully before deployment starts
     runs-on: ubuntu-latest
+    environment: Finkraft
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
